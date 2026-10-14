@@ -5,7 +5,7 @@ import { Calendar, CostBar, TripDetail, WEATHER_LABEL, won, wonRange } from './c
 import { DESTINATIONS, ORIGINS } from './data'
 import { bestDatesFor, bestTrips, DEFAULT_CONDITIONS, fmtDate, originsFor, type Conditions, type TripCandidate } from './planner'
 
-const STORE_KEY = 'tourplan.conditions.v1'
+const STORE_KEY = 'tourplan.conditions.v2'
 
 function loadConditions(): Conditions {
   try {

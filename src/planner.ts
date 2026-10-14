@@ -26,7 +26,7 @@ export const DEFAULT_CONDITIONS: Conditions = {
   endDate: '2026-12-31',
   maxSchoolDays: 3,
   schoolPenalty: 5,
-  japanOnly: true,
+  japanOnly: false,
   avoidPeak: true,
   excludeBadWeather: true,
   budget: 250,
