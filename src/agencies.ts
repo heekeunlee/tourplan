@@ -57,21 +57,3 @@ export const AGENCIES: Agency[] = [
 ]
 
 export const AGENCY_KINDS: AgencyKind[] = ['패키지 여행사', '저가항공 특가', '항공 비교', '숙소·OTA', '특가 커뮤니티']
-
-const KIND_KEYWORD: Record<AgencyKind, string> = {
-  '패키지 여행사': '가족 패키지',
-  '저가항공 특가': '항공권 특가',
-  '항공 비교': '항공권',
-  '숙소·OTA': '가족 호텔',
-  '특가 커뮤니티': '특가',
-}
-
-export function agencyQuery(a: Agency, keyword: string, month: string) {
-  return `${keyword} ${month} ${KIND_KEYWORD[a.kind]}`.replace(/\s+/g, ' ').trim()
-}
-
-export const googleSite = (a: Agency, query: string, recentOnly: boolean) =>
-  `https://www.google.com/search?q=${encodeURIComponent(`site:${a.domain.split('/')[0]} ${query}`)}${recentOnly ? '&tbs=qdr:m' : ''}`
-
-export const naverSearch = (query: string) =>
-  `https://search.naver.com/search.naver?query=${encodeURIComponent(query)}`

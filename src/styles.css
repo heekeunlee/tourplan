@@ -175,3 +175,27 @@ footer { margin-top: 32px; text-align: center; }
   .tabs { width: 100%; }
   .tabs button { flex: 1; }
 }
+
+.route { font-weight: 600; font-size: .92rem; }
+.origin-compare { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: .82rem; }
+.origin-compare span { padding: 3px 9px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); }
+.origin-compare span.on { border-color: var(--accent); background: var(--accent-soft); }
+
+.book-group { margin-bottom: 10px; }
+.book-group .links-kind { display: block; width: auto; margin-bottom: 4px; }
+.book-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
+a.book { display: grid; gap: 1px; padding: 8px 10px; border-radius: 10px; text-decoration: none; background: var(--bg); border: 1px solid var(--line); color: var(--text); }
+a.book b { font-size: .88rem; color: var(--a); }
+a.book small { font-size: .74rem; color: var(--muted); }
+a.book.lv-direct { border-left: 4px solid var(--good); }
+a.book.lv-search { border-left: 4px solid var(--a); }
+a.book.lv-start { border-left: 4px solid var(--c-food); }
+a.book:hover { background: var(--a-soft); }
+.combo-trip a.go { font-size: .78rem; font-weight: 700; text-decoration: none; padding: 2px 8px; border-radius: 8px; background: var(--accent); color: #fff; }
+.combo { }
+.lv { display: inline-block; width: 4px; height: 12px; vertical-align: -2px; margin-right: 4px; }
+.lv-direct.lv { background: var(--good); }
+.lv-search.lv { background: var(--a); }
+.lv-start.lv { background: var(--c-food); }
+.agency.book { text-decoration: none; color: var(--text); }
+.agency.book strong { color: var(--a); }

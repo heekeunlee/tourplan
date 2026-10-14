@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
-import { AGENCIES, AGENCY_KINDS, agencyQuery, googleSite, naverSearch, type AgencyKind } from './agencies'
+import { AGENCIES, AGENCY_KINDS } from './agencies'
+import { bookingLinks, GROUPS, LEVEL_LABEL, primaryLink } from './booking'
 import { Calendar, CostBar, TripDetail, WEATHER_LABEL, won, wonRange } from './components'
 import { DESTINATIONS, ORIGINS } from './data'
-import { bestCombos, bestDatesFor, DEFAULT_CONDITIONS, fmtDate, type Conditions } from './planner'
+import { bestCombos, bestDatesFor, DEFAULT_CONDITIONS, fmtDate, originsFor, type Conditions, type TripCandidate } from './planner'
 
 const STORE_KEY = 'tourplan.conditions.v1'
 
@@ -57,7 +58,7 @@ export default function App() {
             <h2>조건</h2>
             <label>출발 공항
               <select value={c.origin} onChange={(e) => set('origin', e.target.value)}>
-                {Object.entries(ORIGINS).map(([k, o]) => <option key={k} value={k}>{o.name} ({k})</option>)}
+                {Object.entries(ORIGINS).map(([k, name]) => <option key={k} value={k}>{name} ({k})</option>)}
               </select>
             </label>
             <div className="row2">
@@ -80,6 +81,7 @@ export default function App() {
             <label>2회 합계 예산 <b>{won(c.budget)}</b>
               <input type="range" min={200} max={1000} step={10} value={c.budget} onChange={(e) => set('budget', Number(e.target.value))} />
             </label>
+            <label className="check"><input type="checkbox" checked={c.japanFromGimpo} onChange={(e) => set('japanFromGimpo', e.target.checked)} />일본은 김포 출발도 비교</label>
             <label className="check"><input type="checkbox" checked={c.requireJapan} onChange={(e) => set('requireJapan', e.target.checked)} />한 번은 일본 필수</label>
             <label className="check"><input type="checkbox" checked={c.avoidPeak} onChange={(e) => set('avoidPeak', e.target.checked)} />연말 성수기(12/19~) 제외</label>
             <label className="check"><input type="checkbox" checked={c.excludeBadWeather} onChange={(e) => set('excludeBadWeather', e.target.checked)} />우기 지역 제외</label>
@@ -92,7 +94,7 @@ export default function App() {
               {combos.length === 0 && <p className="panel">조건에 맞는 조합이 없습니다. 체험학습 일수나 기간을 늘려 보세요.</p>}
               <div className="combos">
                 {combos.map((cb, i) => (
-                  <button key={cb.a.dest.id + cb.b.dest.id} className={`combo ${i === selected ? 'on' : ''}`} onClick={() => setSelected(i)}>
+                  <div key={cb.a.dest.id + cb.b.dest.id} role="button" tabIndex={0} className={`combo ${i === selected ? 'on' : ''}`} onClick={() => setSelected(i)} onKeyDown={(e) => { if (e.key === 'Enter') setSelected(i) }}>
                     <div className="combo-head">
                       <span className="rank">{i + 1}</span>
                       <strong>{wonRange(cb.total)}</strong>
@@ -100,12 +102,13 @@ export default function App() {
                     </div>
                     {[cb.a, cb.b].map((t) => (
                       <div key={t.dest.id} className="combo-trip">
-                        <span>{t.dest.flag} {t.dest.name}</span>
+                        <span>{t.dest.flag} {t.dest.name} <small className="muted">{t.origin}→{t.route.airport}</small></span>
                         <span className="muted">{fmtDate(t.depart)}~{fmtDate(t.ret)}</span>
+                        <a className="go" href={primaryLink(t, c).url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>예약 ↗</a>
                       </div>
                     ))}
                     <span className="muted small">체험학습 총 {cb.schoolDays}일</span>
-                  </button>
+                  </div>
                 ))}
               </div>
             </section>
@@ -149,7 +152,7 @@ export default function App() {
           </main>
         </div>
       ) : (
-        <AgencySearch c={c} defaultDest={combo?.a.dest.name.split('·')[0] ?? '후쿠오카'} />
+        <BookingHub c={c} />
       )}
 
       <footer className="muted small">
@@ -159,75 +162,75 @@ export default function App() {
   )
 }
 
-function AgencySearch({ c, defaultDest }: { c: Conditions; defaultDest: string }) {
-  const [keyword, setKeyword] = useState(defaultDest)
-  const [month, setMonth] = useState('11월')
-  const [recentOnly, setRecentOnly] = useState(true)
-  const [kinds, setKinds] = useState<AgencyKind[]>(AGENCY_KINDS)
-  const toggle = (k: AgencyKind) => setKinds(kinds.includes(k) ? kinds.filter((x) => x !== k) : [...kinds, k])
-
-  const quick = [
-    `${keyword} ${month} 가족 패키지 특가`,
-    `${keyword} ${month} 항공권 특가 ${ORIGINS[c.origin]?.name ?? ''} 출발`,
-    `${keyword} 초등 아이 가족여행 추천 숙소`,
-    `${keyword} ${month} 땡처리 항공`,
-  ]
+function BookingHub({ c }: { c: Conditions }) {
+  const [destId, setDestId] = useState(DESTINATIONS[0].id)
+  const dest = DESTINATIONS.find((d) => d.id === destId)!
+  const origins = originsFor(dest, c)
+  const [origin, setOrigin] = useState(c.origin)
+  const useOrigin = origins.includes(origin) ? origin : origins[0]
+  const trip: TripCandidate | undefined = useMemo(
+    () => (useOrigin ? bestDatesFor(dest, { ...c, origin: useOrigin }, 1)[0] : undefined),
+    [dest, c, useOrigin],
+  )
+  const links = trip ? bookingLinks(trip, c) : []
 
   return (
     <main className="search">
       <section className="panel">
-        <h2>여행사·특가 통합검색</h2>
+        <h2>예약 바로가기</h2>
         <p className="muted">
-          패키지 여행사, 저가항공 특가 페이지, 항공·숙소 비교 사이트, 특가 커뮤니티를 한 번에 검색합니다.
-          각 사이트 안의 상품을 검색엔진(site: 검색)으로 찾아 주고, 홈 링크로 바로 특가 페이지에 들어갈 수 있습니다.
+          목적지를 고르면 최저가 날짜 기준으로 여행사·항공사·숙소 예약 페이지가 열립니다. 검색엔진을 거치지 않고 각 사이트로 바로 이동합니다.
         </p>
         <div className="search-bar">
-          <label>목적지·키워드
-            <input value={keyword} onChange={(e) => setKeyword(e.target.value)} list="dest-list" placeholder="예: 후쿠오카 유후인" />
-            <datalist id="dest-list">
-              {DESTINATIONS.map((d) => <option key={d.id} value={d.name.split('·')[0]} />)}
-              <option value="유후인 료칸" /><option value="벳푸 온천" /><option value="오키나와" /><option value="삿포로" />
-            </datalist>
-          </label>
-          <label>시기
-            <select value={month} onChange={(e) => setMonth(e.target.value)}>
-              <option>11월</option><option>12월</option><option value="">전체</option>
+          <label>목적지
+            <select value={destId} onChange={(e) => setDestId(e.target.value)}>
+              {DESTINATIONS.map((d) => <option key={d.id} value={d.id}>{d.flag} {d.name}</option>)}
             </select>
           </label>
-          <label className="check"><input type="checkbox" checked={recentOnly} onChange={(e) => setRecentOnly(e.target.checked)} />최근 1개월 게시물만 (구글)</label>
+          <label>출발 공항
+            <select value={useOrigin ?? ''} onChange={(e) => setOrigin(e.target.value)}>
+              {origins.map((o) => <option key={o} value={o}>{ORIGINS[o]} → {dest.routes[o].airport}</option>)}
+            </select>
+          </label>
         </div>
-        <div className="chips">
-          {AGENCY_KINDS.map((k) => (
-            <button key={k} className={`chip toggle ${kinds.includes(k) ? 'on' : ''}`} onClick={() => toggle(k)}>{k}</button>
-          ))}
-        </div>
-        <div className="quick">
-          <span className="links-kind">네이버 통합</span>
-          {quick.map((q) => <a key={q} href={naverSearch(q)} target="_blank" rel="noreferrer">{q} ↗</a>)}
-        </div>
+        {trip ? (
+          <p><b>{fmtDate(trip.depart)} → {fmtDate(trip.ret)}</b> · 예상 {wonRange(trip.cost.total)} · 체험학습 {trip.schoolDays}일 <small className="muted">(조건 탭의 기간·결석 설정 기준 최저가 날짜)</small></p>
+        ) : (
+          <p className="warn">현재 조건에서 가능한 날짜가 없습니다. 최저가 플랜 탭에서 조건을 완화해 보세요.</p>
+        )}
+        <p className="legend-line small muted">
+          <i className="lv lv-direct" /> 날짜·인원 입력됨 &nbsp; <i className="lv lv-search" /> 상품 목록 &nbsp; <i className="lv lv-start" /> 예약 시작 페이지
+        </p>
       </section>
 
-      {AGENCY_KINDS.filter((k) => kinds.includes(k)).map((k) => (
-        <section key={k}>
-          <h3>{k}</h3>
+      {trip && GROUPS.map((g) => (
+        <section key={g}>
+          <h3>{g}</h3>
           <div className="agency-grid">
-            {AGENCIES.filter((a) => a.kind === k).map((a) => {
-              const query = agencyQuery(a, keyword, month)
-              return (
-                <div key={a.name} className="agency">
-                  <strong>{a.name}</strong>
-                  <span className="muted small">{a.domain}{a.region && ` · ${a.region === 'JP' ? '일본' : a.region === 'TW' ? '대만' : '동남아'} 노선`}</span>
-                  <div className="agency-links">
-                    <a href={googleSite(a, query, recentOnly)} target="_blank" rel="noreferrer">상품 검색</a>
-                    <a href={naverSearch(`${a.name} ${query}`)} target="_blank" rel="noreferrer">네이버</a>
-                    <a href={a.home} target="_blank" rel="noreferrer">홈·특가 ↗</a>
-                  </div>
-                </div>
-              )
-            })}
+            {links.filter((l) => l.group === g).map((l) => (
+              <a key={l.name} className={`agency book lv-${l.level}`} href={l.url} target="_blank" rel="noreferrer">
+                <strong>{l.name} ↗</strong>
+                <span className="muted small">{LEVEL_LABEL[l.level]}{l.hint ? ` · ${l.hint}` : ''}</span>
+              </a>
+            ))}
           </div>
         </section>
       ))}
+
+      <section>
+        <h3>특가·이벤트 페이지</h3>
+        <p className="muted small">특가는 수시로 바뀌어 각 사이트 메인에서 확인해야 합니다. 앱 푸시 알림을 켜 두세요.</p>
+        {AGENCY_KINDS.map((k) => (
+          <div key={k} className="book-group">
+            <span className="links-kind">{k}</span>
+            <div className="book-links">
+              {AGENCIES.filter((a) => a.kind === k).map((a) => (
+                <a key={a.name} className="book lv-start" href={a.home} target="_blank" rel="noreferrer"><b>{a.name} ↗</b><small>{a.domain}</small></a>
+              ))}
+            </div>
+          </div>
+        ))}
+      </section>
 
       <section className="panel">
         <h3>특가 놓치지 않는 법</h3>

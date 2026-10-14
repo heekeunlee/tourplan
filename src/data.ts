@@ -10,7 +10,6 @@ export interface Destination {
   country: string
   flag: string
   region: Region
-  airport: string // 도착 공항 IATA
   hotelCity: string // 숙소 검색어
   tags: string[]
   nights: number
@@ -24,16 +23,23 @@ export interface Destination {
   weather: { nov: Weather; dec: Weather; note: string }
   itinerary: string[]
   tips: string[]
-  origins: string[] // 직항 출발 가능 공항
+  routes: Record<string, Route> // 출발 공항별 직항 노선
   japanHolidaySensitive?: boolean
 }
 
-export const ORIGINS: Record<string, { name: string; factor: Partial<Record<Region, number>> }> = {
-  ICN: { name: '인천', factor: {} },
-  GMP: { name: '김포', factor: { JP: 1.15 } },
-  PUS: { name: '부산(김해)', factor: { JP: 0.75, SEA: 1.0, TW: 0.95 } },
-  TAE: { name: '대구', factor: { JP: 0.85, SEA: 1.05, TW: 1.0 } },
-  CJJ: { name: '청주', factor: { JP: 0.95, SEA: 1.05, TW: 1.0 } },
+export interface Route {
+  airport: string // 도착 공항 IATA
+  factor?: number // 인천 출발 대비 항공료 배율
+  transferSave?: number // 공항↔시내 교통비 절감액 (4인, 만원)
+  note?: string
+}
+
+export const ORIGINS: Record<string, string> = {
+  ICN: '인천',
+  GMP: '김포',
+  PUS: '부산(김해)',
+  TAE: '대구',
+  CJJ: '청주',
 }
 
 export const DESTINATIONS: Destination[] = [
@@ -43,7 +49,6 @@ export const DESTINATIONS: Destination[] = [
     country: '일본 규슈',
     flag: '🇯🇵',
     region: 'JP',
-    airport: 'FUK',
     hotelCity: 'Fukuoka',
     tags: ['온천', '맛집', '관광', '단거리'],
     nights: 3,
@@ -61,8 +66,8 @@ export const DESTINATIONS: Destination[] = [
       '벳푸 지옥온천 순례(가마도·우미지옥) → 하카타 복귀',
       '다자이후 텐만구 또는 쇼핑 → 귀국',
     ],
-    tips: ['료칸은 1인 요금제 — 초등 아동요금(보통 성인의 70%) 확인', '벳푸 뷔페 포함 온천호텔이 료칸보다 저렴한 경우 많음', '부산·대구 출발이 인천보다 저렴'],
-    origins: ['ICN', 'GMP', 'PUS', 'TAE', 'CJJ'],
+    tips: ['료칸은 1인 요금제 — 초등 아동요금(보통 성인의 70%) 확인', '벳푸 뷔페 포함 온천호텔이 료칸보다 저렴한 경우 많음', '부산·대구 출발이 인천보다 저렴 (김포 직항은 없음)'],
+    routes: { ICN: { airport: 'FUK' }, PUS: { airport: 'FUK', factor: 0.75 }, TAE: { airport: 'FUK', factor: 0.85 }, CJJ: { airport: 'FUK', factor: 0.95 } },
     japanHolidaySensitive: true,
   },
   {
@@ -71,7 +76,6 @@ export const DESTINATIONS: Destination[] = [
     country: '일본 간사이',
     flag: '🇯🇵',
     region: 'JP',
-    airport: 'KIX',
     hotelCity: 'Osaka',
     tags: ['온천', '맛집', '관광', '테마파크'],
     nights: 3,
@@ -90,7 +94,34 @@ export const DESTINATIONS: Destination[] = [
       '오사카성 또는 가이유칸 수족관 → 귀국',
     ],
     tips: ['USJ는 4인 약 45만원 추가 — 선택', '간사이 레일패스보다 구간권이 저렴한 경우 많음'],
-    origins: ['ICN', 'GMP', 'PUS', 'TAE', 'CJJ'],
+    routes: { ICN: { airport: 'KIX' }, GMP: { airport: 'KIX', factor: 1.12, note: '김포→간사이 (도심 공항 접근 편리)' }, PUS: { airport: 'KIX', factor: 0.9 }, TAE: { airport: 'KIX', factor: 0.95 }, CJJ: { airport: 'KIX' } },
+    japanHolidaySensitive: true,
+  },
+  {
+    id: 'tyo',
+    name: '도쿄·하코네 온천',
+    country: '일본 간토',
+    flag: '🇯🇵',
+    region: 'JP',
+    hotelCity: 'Tokyo',
+    tags: ['온천', '맛집', '관광', '김포 출발'],
+    nights: 3,
+    redEye: false,
+    flightPP: [24, 34],
+    hotelNight: [16, 22],
+    specialNight: { label: '하코네 온천 료칸 (석·조식)', price: [55, 85] },
+    foodPPDay: [3.2, 4],
+    transport: [25, 32],
+    activities: [10, 15],
+    weather: { nov: 'good', dec: 'ok', note: '11월 하코네 단풍, 12월 맑고 건조(5~13℃)' },
+    itinerary: [
+      '도착 → 아사쿠사 센소지·스카이트리',
+      '로망스카로 하코네 → 오와쿠다니·아시노코 해적선 → 료칸 온천',
+      '도쿄 복귀 → 시부야·오다이바',
+      '쓰키지 장외시장 아침 → 귀국',
+    ],
+    tips: ['김포→하네다는 도심까지 30분 — 나리타 대비 4인 교통비 약 6만원·1시간 절약', '하코네 프리패스 아동 반값', '나리타 도착 시 스카이라이너 사전 구매 할인'],
+    routes: { ICN: { airport: 'NRT' }, GMP: { airport: 'HND', factor: 1.12, transferSave: 6, note: '김포→하네다 (도심 30분)' }, PUS: { airport: 'NRT' } },
     japanHolidaySensitive: true,
   },
   {
@@ -99,7 +130,6 @@ export const DESTINATIONS: Destination[] = [
     country: '일본 시코쿠',
     flag: '🇯🇵',
     region: 'JP',
-    airport: 'MYJ',
     hotelCity: 'Matsuyama',
     tags: ['온천', '한적', '소도시'],
     nights: 3,
@@ -118,7 +148,7 @@ export const DESTINATIONS: Destination[] = [
       '도고 하이카라 거리 쇼핑 → 귀국',
     ],
     tips: ['인천 직항이 주 몇 회뿐 — 운항 요일 먼저 확인', '노면전차 1일권으로 교통비 절약'],
-    origins: ['ICN'],
+    routes: { ICN: { airport: 'MYJ' } },
     japanHolidaySensitive: true,
   },
   {
@@ -127,7 +157,6 @@ export const DESTINATIONS: Destination[] = [
     country: '베트남',
     flag: '🇻🇳',
     region: 'SEA',
-    airport: 'PQC',
     hotelCity: 'Phu Quoc',
     tags: ['휴양', '물놀이', '테마파크', '따뜻함'],
     nights: 3,
@@ -145,7 +174,7 @@ export const DESTINATIONS: Destination[] = [
       '야시장 → 심야편 귀국(아침 도착)',
     ],
     tips: ['리조트 얼리체크인/레이트체크아웃 포함 상품 비교', '빈펄 패키지(숙박+입장권) 묶음이 더 싼 경우 있음'],
-    origins: ['ICN', 'PUS'],
+    routes: { ICN: { airport: 'PQC' }, PUS: { airport: 'PQC' } },
   },
   {
     id: 'tpe',
@@ -153,7 +182,6 @@ export const DESTINATIONS: Destination[] = [
     country: '대만',
     flag: '🇹🇼',
     region: 'TW',
-    airport: 'TPE',
     hotelCity: 'Taipei',
     tags: ['맛집', '관광', '야시장', '단거리'],
     nights: 3,
@@ -171,7 +199,7 @@ export const DESTINATIONS: Destination[] = [
       '중정기념당·딘타이펑 → 귀국',
     ],
     tips: ['이지카드로 지하철·버스 할인', '예스진지는 4인이면 택시투어가 버스투어와 비슷'],
-    origins: ['ICN', 'GMP', 'PUS', 'TAE', 'CJJ'],
+    routes: { ICN: { airport: 'TPE' }, GMP: { airport: 'TSA', factor: 1.1, transferSave: 3, note: '김포→쑹산 (타이베이 시내 공항)' }, PUS: { airport: 'TPE', factor: 0.95 }, TAE: { airport: 'TPE' }, CJJ: { airport: 'TPE' } },
   },
   {
     id: 'bkk',
@@ -179,7 +207,6 @@ export const DESTINATIONS: Destination[] = [
     country: '태국',
     flag: '🇹🇭',
     region: 'SEA',
-    airport: 'BKK',
     hotelCity: 'Bangkok',
     tags: ['맛집', '관광', '수영장호텔', '따뜻함'],
     nights: 3,
@@ -197,7 +224,7 @@ export const DESTINATIONS: Destination[] = [
       '짜뚜짝/쇼핑 → 심야편 귀국',
     ],
     tips: ['수영장 좋은 호텔이 1박 10만원 안팎', '그랩으로 이동, 툭툭은 흥정 필요'],
-    origins: ['ICN', 'PUS', 'TAE'],
+    routes: { ICN: { airport: 'BKK' }, PUS: { airport: 'BKK' }, TAE: { airport: 'BKK', factor: 1.05 } },
   },
   {
     id: 'dad',
@@ -205,7 +232,6 @@ export const DESTINATIONS: Destination[] = [
     country: '베트남',
     flag: '🇻🇳',
     region: 'SEA',
-    airport: 'DAD',
     hotelCity: 'Da Nang',
     tags: ['휴양', '관광', '저렴'],
     nights: 3,
@@ -218,7 +244,7 @@ export const DESTINATIONS: Destination[] = [
     weather: { nov: 'bad', dec: 'bad', note: '⚠️ 10~12월 우기·태풍 영향 — 비추천 시기' },
     itinerary: ['저녁 출발 → 심야 도착', '바나힐', '호이안 올드타운', '미케비치 → 심야편 귀국'],
     tips: ['이 시기엔 일정 변경 가능 요금 권장'],
-    origins: ['ICN', 'GMP', 'PUS', 'TAE', 'CJJ'],
+    routes: { ICN: { airport: 'DAD' }, PUS: { airport: 'DAD' }, TAE: { airport: 'DAD', factor: 1.05 }, CJJ: { airport: 'DAD', factor: 1.05 } },
   },
 ]
 

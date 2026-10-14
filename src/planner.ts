@@ -1,7 +1,8 @@
-import { DESTINATIONS, JP_HOLIDAYS, KR_HOLIDAYS, ORIGINS, PEAK_START, type Destination } from './data'
+import { DESTINATIONS, JP_HOLIDAYS, KR_HOLIDAYS, PEAK_START, type Destination, type Route } from './data'
 
 export interface Conditions {
   origin: string
+  japanFromGimpo: boolean // 일본 노선은 김포 출발도 함께 비교
   adults: number
   childAges: number[]
   startDate: string
@@ -17,6 +18,7 @@ export interface Conditions {
 
 export const DEFAULT_CONDITIONS: Conditions = {
   origin: 'ICN',
+  japanFromGimpo: true,
   adults: 2,
   childAges: [8, 10],
   startDate: '2026-11-02',
@@ -34,6 +36,8 @@ export type Range = { low: number; high: number; mid: number }
 
 export interface TripCandidate {
   dest: Destination
+  origin: string
+  route: Route
   depart: string
   ret: string
   checkIn: string
@@ -75,10 +79,18 @@ function datesBetween(from: string, to: string) {
   return out
 }
 
-export function buildTrip(dest: Destination, depart: string, c: Conditions): TripCandidate | null {
+/** 이 목적지에 대해 비교할 출발 공항 (일본은 김포 포함 옵션) */
+export function originsFor(dest: Destination, c: Conditions) {
+  const list = [c.origin]
+  if (dest.region === 'JP' && c.japanFromGimpo && c.origin !== 'GMP') list.push('GMP')
+  return list.filter((o) => dest.routes[o])
+}
+
+export function buildTrip(dest: Destination, depart: string, c: Conditions, origin = c.origin): TripCandidate | null {
   const ret = addDays(depart, dest.nights + (dest.redEye ? 1 : 0))
   if (depart < c.startDate || ret > c.endDate) return null
-  if (!dest.origins.includes(c.origin)) return null
+  const route = dest.routes[origin]
+  if (!route) return null
   const peak = ret >= PEAK_START
   if (c.avoidPeak && peak) return null
 
@@ -116,18 +128,23 @@ export function buildTrip(dest: Destination, depart: string, c: Conditions): Tri
   const eaters = c.adults + kids * 0.7
   const people = c.adults + c.childAges.length
   const roomF = people > 4 ? 1.5 : 1
-  const originF = ORIGINS[c.origin]?.factor[dest.region] ?? 1
+  const originF = route.factor ?? 1
 
   const flight = scale(dest.flightPP, seats * flightF * originF)
   const normalNights = dest.specialNight ? dest.nights - 1 : dest.nights
   let hotel = scale(dest.hotelNight, normalNights * hotelF * roomF)
   if (dest.specialNight) hotel = sum(hotel, scale(dest.specialNight.price, hotelF * (eaters / 3.4)))
   const food = scale(dest.foodPPDay, eaters * (dest.nights + 1))
-  const local = sum(scale(dest.transport, people / 4), scale(dest.activities, people / 4))
+  const transfer = route.transferSave ?? 0
+  const local = sum(scale([dest.transport[0] - transfer, dest.transport[1] - transfer], people / 4), scale(dest.activities, people / 4))
   const total = sum(flight, hotel, food, local)
+
+  if (origin === 'GMP' && route.note) notes.push(route.note)
 
   return {
     dest,
+    origin,
+    route,
     depart,
     ret,
     checkIn: depart,
@@ -142,9 +159,11 @@ export function buildTrip(dest: Destination, depart: string, c: Conditions): Tri
 export function allCandidates(c: Conditions, dests = DESTINATIONS) {
   const out: TripCandidate[] = []
   for (const dest of dests) {
-    for (let d = c.startDate; d <= c.endDate; d = addDays(d, 1)) {
-      const t = buildTrip(dest, d, c)
-      if (t) out.push(t)
+    for (const origin of originsFor(dest, c)) {
+      for (let d = c.startDate; d <= c.endDate; d = addDays(d, 1)) {
+        const t = buildTrip(dest, d, c, origin)
+        if (t) out.push(t)
+      }
     }
   }
   return out

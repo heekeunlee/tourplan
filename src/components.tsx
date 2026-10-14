@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { JP_HOLIDAYS, PEAK_START } from './data'
-import { searchLinks } from './links'
-import { addDays, fmtDate, weekday, type Conditions, type Range, type TripCandidate } from './planner'
+import { JP_HOLIDAYS, ORIGINS, PEAK_START } from './data'
+import { bookingLinks, GROUPS, LEVEL_LABEL } from './booking'
+import { addDays, buildTrip, fmtDate, originsFor, weekday, type Conditions, type Range, type TripCandidate } from './planner'
 
 export const won = (n: number) => `${Math.round(n).toLocaleString('ko-KR')}만원`
 export const wonRange = (r: Range) => `${Math.round(r.low)}~${Math.round(r.high)}만원`
@@ -69,8 +69,7 @@ export function TripDetail({ trip, c, label }: { trip: TripCandidate; c: Conditi
   const { dest } = trip
   const month = Number(trip.depart.slice(5, 7))
   const weather = month === 12 ? dest.weather.dec : dest.weather.nov
-  const links = searchLinks(trip, c)
-  const kinds = ['항공', '숙소', '패키지', '투어'] as const
+  const links = bookingLinks(trip, c)
   return (
     <article className="trip">
       <header>
@@ -80,6 +79,7 @@ export function TripDetail({ trip, c, label }: { trip: TripCandidate; c: Conditi
           {dest.country} · {fmtDate(trip.depart)} → {fmtDate(trip.ret)} · {dest.nights}박 {dest.nights + (dest.redEye ? 2 : 1)}일
           {dest.redEye && ' (야간 출발)'}
         </p>
+        <p className="route">✈️ {ORIGINS[trip.origin]}({trip.origin}) → {trip.route.airport}</p>
       </header>
 
       <div className="trip-total">
@@ -87,6 +87,7 @@ export function TripDetail({ trip, c, label }: { trip: TripCandidate; c: Conditi
         <span>체험학습 {trip.schoolDays}일</span>
       </div>
       <CostBar trip={trip} />
+      <OriginCompare trip={trip} c={c} />
       <table className="breakdown">
         <tbody>
           <tr><th><i className="dot c-flight" />항공</th><td>{wonRange(trip.cost.flight)}</td></tr>
@@ -107,15 +108,21 @@ export function TripDetail({ trip, c, label }: { trip: TripCandidate; c: Conditi
         {dest.itinerary.map((s, i) => <li key={i}><b>{i + 1}일차</b> {s}</li>)}
       </ol>
 
-      <h4>실시간 가격 검색 <small>(날짜·인원 자동 입력)</small></h4>
-      {kinds.map((k) => (
-        <div key={k} className="links">
-          <span className="links-kind">{k}</span>
-          {links.filter((l) => l.kind === k).map((l) => (
-            <a key={l.label} href={l.url} target="_blank" rel="noreferrer">{l.label} ↗</a>
-          ))}
+      <h4>예약 페이지로 바로 가기 <small>(새 창에서 해당 사이트 예약·상품 페이지가 열립니다)</small></h4>
+      {GROUPS.map((g) => (
+        <div key={g} className="book-group">
+          <span className="links-kind">{g}</span>
+          <div className="book-links">
+            {links.filter((l) => l.group === g).map((l) => (
+              <a key={l.name} className={`book lv-${l.level}`} href={l.url} target="_blank" rel="noreferrer" title={l.hint}>
+                <b>{l.name} ↗</b>
+                <small>{LEVEL_LABEL[l.level]}{l.hint ? ` · ${l.hint}` : ''}</small>
+              </a>
+            ))}
+          </div>
         </div>
       ))}
+      <p className="muted small">항공사 운항 여부는 일부 추정입니다. 사이트 개편으로 주소가 바뀌면 "예약 시작" 단계에서 직접 검색해야 할 수 있습니다.</p>
 
       <h4>절약 팁</h4>
       <ul className="tips">{dest.tips.map((t) => <li key={t}>{t}</li>)}</ul>
@@ -162,6 +169,22 @@ export function Calendar({ trips, c }: { trips: TripCandidate[]; c: Conditions }
         <span><i className="jp-holiday" />일본 공휴일</span>
         <span><i className="peak" />연말 성수기</span>
       </div>
+    </div>
+  )
+}
+
+function OriginCompare({ trip, c }: { trip: TripCandidate; c: Conditions }) {
+  const alts = originsFor(trip.dest, c)
+    .map((o) => (o === trip.origin ? trip : buildTrip(trip.dest, trip.depart, c, o)))
+    .filter((t): t is TripCandidate => t !== null)
+  if (alts.length < 2) return null
+  return (
+    <div className="origin-compare">
+      {alts.map((t) => (
+        <span key={t.origin} className={t.origin === trip.origin ? 'on' : ''}>
+          {ORIGINS[t.origin]}→{t.route.airport} <b>{won(t.cost.total.mid)}</b>
+        </span>
+      ))}
     </div>
   )
 }
