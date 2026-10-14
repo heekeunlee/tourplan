@@ -1,4 +1,4 @@
-import { countryOf, DESTINATIONS, JP_HOLIDAYS, KR_HOLIDAYS, PEAK_START, type Destination, type Route } from './data'
+import { DESTINATIONS, JP_HOLIDAYS, KR_HOLIDAYS, PEAK_START, type Destination, type Route } from './data'
 
 export interface Conditions {
   origin: string
@@ -10,12 +10,10 @@ export interface Conditions {
   leaveDays: number[] // 부모가 휴가 가능한 요일 (0=일 … 6=토), 비우거나 7개면 제한 없음
   maxSchoolDays: number // 1회 여행당 체험학습 최대 일수
   schoolPenalty: number // 체험학습 1일을 비용 몇 만원으로 볼지 (정렬용)
-  minGapDays: number
-  requireJapan: boolean
-  countryMode: 'any' | 'one' | 'two' // 두 여행의 국가: 제한 없음 / 같은 1개국 / 서로 다른 2개국
+  japanOnly: boolean
   avoidPeak: boolean
   excludeBadWeather: boolean
-  budget: number // 2회 합계 예산 (만원)
+  budget: number // 1회 여행 예산 (만원)
 }
 
 export const DEFAULT_CONDITIONS: Conditions = {
@@ -28,12 +26,10 @@ export const DEFAULT_CONDITIONS: Conditions = {
   endDate: '2026-12-31',
   maxSchoolDays: 3,
   schoolPenalty: 5,
-  minGapDays: 14,
-  requireJapan: true,
-  countryMode: 'any',
+  japanOnly: true,
   avoidPeak: true,
   excludeBadWeather: true,
-  budget: 500,
+  budget: 250,
 }
 
 export type Range = { low: number; high: number; mid: number }
@@ -50,14 +46,6 @@ export interface TripCandidate {
   schoolDays: number
   cost: { flight: Range; hotel: Range; food: Range; local: Range; total: Range }
   notes: string[]
-  score: number
-}
-
-export interface Combo {
-  a: TripCandidate
-  b: TripCandidate
-  total: Range
-  schoolDays: number
   score: number
 }
 
@@ -186,33 +174,14 @@ export function allCandidates(c: Conditions, dests = DESTINATIONS) {
   return out
 }
 
-/** 목적지 쌍마다 최적 날짜 조합 1개씩, 점수 순 */
-export function bestCombos(c: Conditions, limit = 8): Combo[] {
-  const cands = allCandidates(c).sort((x, y) => x.score - y.score)
-  const best = new Map<string, Combo>()
-  for (const a of cands) {
-    for (const b of cands) {
-      if (b.depart <= a.depart) continue
-      // 같은 도시 재방문은 '1개국' 모드에서만 허용
-      if (a.dest.id === b.dest.id && c.countryMode !== 'one') continue
-      if (diffDays(a.ret, b.depart) < c.minGapDays) continue
-      const sameCountry = countryOf(a.dest) === countryOf(b.dest)
-      if (c.countryMode === 'one' && !sameCountry) continue
-      if (c.countryMode === 'two' && sameCountry) continue
-      if (c.requireJapan && a.dest.region !== 'JP' && b.dest.region !== 'JP') continue
-      const key = [a.dest.id, b.dest.id].sort().join('+')
-      const score = a.score + b.score
-      const prev = best.get(key)
-      if (!prev || score < prev.score) {
-        best.set(key, {
-          a, b, score,
-          total: sum(a.cost.total, b.cost.total),
-          schoolDays: a.schoolDays + b.schoolDays,
-        })
-      }
-    }
-  }
-  return [...best.values()].sort((x, y) => x.score - y.score).slice(0, limit)
+/** 목적지마다 최적 날짜·출발공항 1개씩, 점수 순 */
+export function bestTrips(c: Conditions, limit = 8): TripCandidate[] {
+  const dests = c.japanOnly ? DESTINATIONS.filter((d) => d.region === 'JP') : DESTINATIONS
+  return dests
+    .map((d) => bestDatesFor(d, c, 1)[0])
+    .filter((t): t is TripCandidate => Boolean(t))
+    .sort((x, y) => x.score - y.score)
+    .slice(0, limit)
 }
 
 export function bestDatesFor(dest: Destination, c: Conditions, limit = 5) {

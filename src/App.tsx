@@ -2,8 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { AGENCIES, AGENCY_KINDS } from './agencies'
 import { bookingLinks, GROUPS, LEVEL_LABEL, primaryLink } from './booking'
 import { Calendar, CostBar, TripDetail, WEATHER_LABEL, won, wonRange } from './components'
-import { countryOf, DESTINATIONS, ORIGINS } from './data'
-import { bestCombos, bestDatesFor, DEFAULT_CONDITIONS, fmtDate, originsFor, type Conditions, type TripCandidate } from './planner'
+import { DESTINATIONS, ORIGINS } from './data'
+import { bestDatesFor, bestTrips, DEFAULT_CONDITIONS, fmtDate, originsFor, type Conditions, type TripCandidate } from './planner'
 
 const STORE_KEY = 'tourplan.conditions.v1'
 
@@ -28,8 +28,9 @@ export default function App() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify(c)) } catch { /* 저장 불가 환경 무시 */ }
   }, [c])
 
-  const combos = useMemo(() => bestCombos(c), [c])
-  const combo = combos[Math.min(selected, combos.length - 1)]
+  const trips = useMemo(() => bestTrips(c), [c])
+  const trip = trips[Math.min(selected, trips.length - 1)]
+  const alternatives = useMemo(() => (trip ? bestDatesFor(trip.dest, { ...c, origin: trip.origin }, 5) : []), [trip, c])
   const set = <K extends keyof Conditions>(k: K, v: Conditions[K]) => { setC({ ...c, [k]: v }); setSelected(0) }
 
   const updateAges = (text: string) => {
@@ -42,9 +43,9 @@ export default function App() {
     <div className="app">
       <header className="hero">
         <div>
-          <p className="eyebrow">성인 {c.adults} · 아이 {c.childAges.length}명 · 11~12월 · 해외 2회</p>
+          <p className="eyebrow">성인 {c.adults} · 아이 {c.childAges.length}명 · 11~12월 · 해외 1회</p>
           <h1>가족여행 최저가 플래너</h1>
-          <p className="muted">한 번은 일본(관광·온천·맛집), 휴가 요일에 맞는 항공+숙박+체류비 합계 최저 조합을 찾습니다.</p>
+          <p className="muted">휴가 요일에 맞춰 항공+숙박+체류비 합계가 가장 싼 여행지·날짜를 찾습니다.</p>
         </div>
         <nav className="tabs">
           <button className={tab === 'plan' ? 'on' : ''} onClick={() => setTab('plan')}>최저가 플랜</button>
@@ -84,23 +85,11 @@ export default function App() {
             <label>체험학습 1일의 부담 <b>{c.schoolPenalty}만원</b> <small>(높을수록 결석 적은 날짜 우선)</small>
               <input type="range" min={0} max={30} value={c.schoolPenalty} onChange={(e) => set('schoolPenalty', Number(e.target.value))} />
             </label>
-            <label>두 여행 사이 최소 간격 <b>{c.minGapDays}일</b>
-              <input type="range" min={3} max={35} value={c.minGapDays} onChange={(e) => set('minGapDays', Number(e.target.value))} />
+            <label>1회 여행 예산 <b>{won(c.budget)}</b>
+              <input type="range" min={100} max={600} step={10} value={c.budget} onChange={(e) => set('budget', Number(e.target.value))} />
             </label>
-            <label>2회 합계 예산 <b>{won(c.budget)}</b>
-              <input type="range" min={200} max={1000} step={10} value={c.budget} onChange={(e) => set('budget', Number(e.target.value))} />
-            </label>
-            <div className="leave">
-              <span className="leave-title">여행 국가 수</span>
-              <div className="seg">
-                {([['any', '제한 없음'], ['one', '1개국'], ['two', '2개국']] as const).map(([v, label]) => (
-                  <button key={v} type="button" className={c.countryMode === v ? 'on' : ''} onClick={() => set('countryMode', v)}>{label}</button>
-                ))}
-              </div>
-              <small className="muted">{c.countryMode === 'one' ? '두 번 모두 같은 나라 (예: 일본 2회)' : c.countryMode === 'two' ? '두 번 서로 다른 나라 (예: 일본 + 대만)' : '나라 구분 없이 최저가 조합'}</small>
-            </div>
             <label className="check"><input type="checkbox" checked={c.japanFromGimpo} onChange={(e) => set('japanFromGimpo', e.target.checked)} />일본은 김포 출발도 비교</label>
-            <label className="check"><input type="checkbox" checked={c.requireJapan} onChange={(e) => set('requireJapan', e.target.checked)} />한 번은 일본 필수</label>
+            <label className="check"><input type="checkbox" checked={c.japanOnly} onChange={(e) => set('japanOnly', e.target.checked)} />일본 여행만 (관광·온천·맛집)</label>
             <label className="check"><input type="checkbox" checked={c.avoidPeak} onChange={(e) => set('avoidPeak', e.target.checked)} />연말 성수기(12/19~) 제외</label>
             <label className="check"><input type="checkbox" checked={c.excludeBadWeather} onChange={(e) => set('excludeBadWeather', e.target.checked)} />우기 지역 제외</label>
             <button className="ghost" onClick={() => { setC(DEFAULT_CONDITIONS); setAgesText(DEFAULT_CONDITIONS.childAges.join(', ')) }}>기본값으로</button>
@@ -108,43 +97,47 @@ export default function App() {
 
           <main className="results">
             <section>
-              <h2>추천 조합 TOP {combos.length}</h2>
-              {combos.length === 0 && <p className="panel">조건에 맞는 조합이 없습니다. 체험학습 일수나 기간을 늘려 보세요.</p>}
+              <h2>추천 여행 TOP {trips.length}</h2>
+              {trips.length === 0 && <p className="panel">조건에 맞는 여행이 없습니다. 체험학습 일수나 기간, 휴가 요일을 늘려 보세요.</p>}
               <div className="combos">
-                {combos.map((cb, i) => (
-                  <div key={cb.a.dest.id + cb.b.dest.id + cb.a.depart} role="button" tabIndex={0} className={`combo ${i === selected ? 'on' : ''}`} onClick={() => setSelected(i)} onKeyDown={(e) => { if (e.key === 'Enter') setSelected(i) }}>
+                {trips.map((t, i) => (
+                  <div key={t.dest.id} role="button" tabIndex={0} className={`combo ${i === selected ? 'on' : ''}`} onClick={() => setSelected(i)} onKeyDown={(e) => { if (e.key === 'Enter') setSelected(i) }}>
                     <div className="combo-head">
                       <span className="rank">{i + 1}</span>
-                      <strong>{wonRange(cb.total)}</strong>
-                      <span className={cb.total.mid <= c.budget ? 'badge good' : 'badge warn'}>{cb.total.mid <= c.budget ? '예산 내' : '예산 초과'}</span>
+                      <strong>{wonRange(t.cost.total)}</strong>
+                      <span className={t.cost.total.mid <= c.budget ? 'badge good' : 'badge warn'}>{t.cost.total.mid <= c.budget ? '예산 내' : '예산 초과'}</span>
                     </div>
-                    {[cb.a, cb.b].map((t, n) => (
-                      <div key={n} className="combo-trip">
-                        <span className="trip-no">{n + 1}차</span>
-                        <div className="trip-main">
-                          <span>{t.dest.flag} {t.dest.name}</span>
-                          <span className="muted small">출국 {fmtDate(t.depart)} {ORIGINS[t.origin]}→{t.route.airport} · 입국 {fmtDate(t.ret)}</span>
-                        </div>
-                        <a className="go" href={primaryLink(t, c).url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>예약 ↗</a>
-                      </div>
-                    ))}
-                    <span className="muted small">
-                      출·입국 2회 · {countryOf(cb.a.dest) === countryOf(cb.b.dest) ? `${countryOf(cb.a.dest)} 1개국` : `${countryOf(cb.a.dest)}+${countryOf(cb.b.dest)} 2개국`} · 체험학습 {cb.schoolDays}일
-                    </span>
+                    <div className="trip-main">
+                      <span>{t.dest.flag} {t.dest.name}</span>
+                      <span className="muted small">출국 {fmtDate(t.depart)} {ORIGINS[t.origin]}→{t.route.airport} · 입국 {fmtDate(t.ret)}</span>
+                    </div>
+                    <div className="combo-trip">
+                      <span className="muted small">{t.nights}박 {t.nights + (t.dest.redEye ? 2 : 1)}일 · 체험학습 {t.schoolDays}일</span>
+                      <a className="go" href={primaryLink(t, c).url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>예약 ↗</a>
+                    </div>
                   </div>
                 ))}
               </div>
             </section>
 
-            {combo && (
+            {trip && (
               <>
                 <section className="panel">
                   <h2>{selected + 1}순위 일정</h2>
-                  <Calendar trips={[combo.a, combo.b]} c={c} />
+                  <Calendar trips={[trip]} c={c} />
+                  {alternatives.length > 1 && (
+                    <>
+                      <h4>이 여행지의 다른 저렴한 날짜</h4>
+                      <div className="chips">
+                        {alternatives.map((a) => (
+                          <span key={a.depart + a.origin} className="chip">{fmtDate(a.depart)}~{fmtDate(a.ret)} · {ORIGINS[a.origin]} · {wonRange(a.cost.total)}</span>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </section>
-                <section className="trips">
-                  <TripDetail trip={combo.a} c={c} label="1차" />
-                  <TripDetail trip={combo.b} c={c} label="2차" />
+                <section className="trips single">
+                  <TripDetail trip={trip} c={c} label="추천 여행" />
                 </section>
               </>
             )}

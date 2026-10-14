@@ -196,3 +196,6 @@ a.book:hover { background: var(--a-soft); }
 .trip-no { font-size: .75rem; font-weight: 700; color: #fff; background: var(--a); border-radius: 6px; padding: 2px 6px; }
 .combo-trip:nth-of-type(3) .trip-no { background: var(--b); }
 .trip-main { display: grid; min-width: 0; }
+
+.trips.single { grid-template-columns: 1fr; }
+.trips.single .trip { border-top: 4px solid var(--a); }

@@ -165,8 +165,7 @@ export function Calendar({ trips, c }: { trips: TripCandidate[]; c: Conditions }
         )
       })}
       <div className="legend">
-        <span><i className="trip-a" />1차 여행</span>
-        <span><i className="trip-b" />2차 여행</span>
+        <span><i className="trip-a" />여행 기간</span>
         <span><i className="jp-holiday" />일본 공휴일</span>
         <span><i className="peak" />연말 성수기</span>
       </div>

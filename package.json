@@ -2,7 +2,7 @@
   "name": "tourplan",
   "private": true,
   "version": "0.1.0",
-  "description": "4인 가족(성인2·초등2) 11~12월 해외여행 2회 최저가 플래너",
+  "description": "4인 가족(성인2·초등2) 11~12월 해외여행 1회 최저가 플래너",
   "type": "module",
   "scripts": {
     "dev": "vite",
