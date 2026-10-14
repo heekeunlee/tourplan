@@ -187,3 +187,7 @@ a.book:hover { background: var(--a-soft); }
 .weekdays button { font: inherit; padding: 6px 0; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); cursor: pointer; }
 .weekdays button.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
 .day.noleave { opacity: .45; }
+
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.seg button { font: inherit; padding: 6px 0; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); cursor: pointer; }
+.seg button.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }

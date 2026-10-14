@@ -1,4 +1,4 @@
-import { DESTINATIONS, JP_HOLIDAYS, KR_HOLIDAYS, PEAK_START, type Destination, type Route } from './data'
+import { countryOf, DESTINATIONS, JP_HOLIDAYS, KR_HOLIDAYS, PEAK_START, type Destination, type Route } from './data'
 
 export interface Conditions {
   origin: string
@@ -12,6 +12,7 @@ export interface Conditions {
   schoolPenalty: number // 체험학습 1일을 비용 몇 만원으로 볼지 (정렬용)
   minGapDays: number
   requireJapan: boolean
+  countryMode: 'any' | 'one' | 'two' // 두 여행의 국가: 제한 없음 / 같은 1개국 / 서로 다른 2개국
   avoidPeak: boolean
   excludeBadWeather: boolean
   budget: number // 2회 합계 예산 (만원)
@@ -29,6 +30,7 @@ export const DEFAULT_CONDITIONS: Conditions = {
   schoolPenalty: 5,
   minGapDays: 14,
   requireJapan: true,
+  countryMode: 'any',
   avoidPeak: true,
   excludeBadWeather: true,
   budget: 500,
@@ -192,6 +194,9 @@ export function bestCombos(c: Conditions, limit = 8): Combo[] {
     for (const b of cands) {
       if (b.depart <= a.depart || a.dest.id === b.dest.id) continue
       if (diffDays(a.ret, b.depart) < c.minGapDays) continue
+      const sameCountry = countryOf(a.dest) === countryOf(b.dest)
+      if (c.countryMode === 'one' && !sameCountry) continue
+      if (c.countryMode === 'two' && sameCountry) continue
       if (c.requireJapan && a.dest.region !== 'JP' && b.dest.region !== 'JP') continue
       const key = [a.dest.id, b.dest.id].sort().join('+')
       const score = a.score + b.score

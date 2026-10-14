@@ -90,6 +90,15 @@ export default function App() {
             <label>2회 합계 예산 <b>{won(c.budget)}</b>
               <input type="range" min={200} max={1000} step={10} value={c.budget} onChange={(e) => set('budget', Number(e.target.value))} />
             </label>
+            <div className="leave">
+              <span className="leave-title">여행 국가 수</span>
+              <div className="seg">
+                {([['any', '제한 없음'], ['one', '1개국'], ['two', '2개국']] as const).map(([v, label]) => (
+                  <button key={v} type="button" className={c.countryMode === v ? 'on' : ''} onClick={() => set('countryMode', v)}>{label}</button>
+                ))}
+              </div>
+              <small className="muted">{c.countryMode === 'one' ? '두 번 모두 같은 나라 (예: 일본 2회)' : c.countryMode === 'two' ? '두 번 서로 다른 나라 (예: 일본 + 대만)' : '나라 구분 없이 최저가 조합'}</small>
+            </div>
             <label className="check"><input type="checkbox" checked={c.japanFromGimpo} onChange={(e) => set('japanFromGimpo', e.target.checked)} />일본은 김포 출발도 비교</label>
             <label className="check"><input type="checkbox" checked={c.requireJapan} onChange={(e) => set('requireJapan', e.target.checked)} />한 번은 일본 필수</label>
             <label className="check"><input type="checkbox" checked={c.avoidPeak} onChange={(e) => set('avoidPeak', e.target.checked)} />연말 성수기(12/19~) 제외</label>

@@ -248,6 +248,9 @@ export const DESTINATIONS: Destination[] = [
   },
 ]
 
+const COUNTRY: Record<string, string> = { fuk: '일본', osa: '일본', tyo: '일본', myj: '일본', tpe: '대만', bkk: '태국', pqc: '베트남', dad: '베트남' }
+export const countryOf = (d: Destination) => COUNTRY[d.id] ?? d.country
+
 export const PEAK_START = '2026-12-19' // 크리스마스·연말 성수기
 export const JP_HOLIDAYS = ['2026-11-03', '2026-11-21', '2026-11-22', '2026-11-23'] // 문화의 날, 근로감사의 날 3연휴
 export const KR_HOLIDAYS = ['2026-12-25']
