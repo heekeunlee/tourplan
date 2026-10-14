@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { JP_HOLIDAYS, ORIGINS, PEAK_START } from './data'
 import { bookingLinks, GROUPS, LEVEL_LABEL } from './booking'
-import { addDays, buildTrip, fmtDate, originsFor, weekday, type Conditions, type Range, type TripCandidate } from './planner'
+import { addDays, buildTrip, fmtDate, leaveRestricted, originsFor, weekday, type Conditions, type Range, type TripCandidate } from './planner'
 
 export const won = (n: number) => `${Math.round(n).toLocaleString('ko-KR')}만원`
 export const wonRange = (r: Range) => `${Math.round(r.low)}~${Math.round(r.high)}만원`
@@ -76,7 +76,7 @@ export function TripDetail({ trip, c, label }: { trip: TripCandidate; c: Conditi
         <span className="trip-label">{label}</span>
         <h3>{dest.flag} {dest.name}</h3>
         <p className="muted">
-          {dest.country} · {fmtDate(trip.depart)} → {fmtDate(trip.ret)} · {dest.nights}박 {dest.nights + (dest.redEye ? 2 : 1)}일
+          {dest.country} · {fmtDate(trip.depart)} → {fmtDate(trip.ret)} · {trip.nights}박 {trip.nights + (dest.redEye ? 2 : 1)}일
           {dest.redEye && ' (야간 출발)'}
         </p>
         <p className="route">✈️ {ORIGINS[trip.origin]}({trip.origin}) → {trip.route.airport}</p>
@@ -105,7 +105,7 @@ export function TripDetail({ trip, c, label }: { trip: TripCandidate; c: Conditi
 
       <h4>추천 동선</h4>
       <ol className="steps">
-        {dest.itinerary.map((s, i) => <li key={i}><b>{i + 1}일차</b> {s}</li>)}
+        {[...dest.itinerary.slice(0, trip.nights < dest.nights ? trip.nights : dest.itinerary.length - 1), dest.itinerary[dest.itinerary.length - 1]].map((s, i) => <li key={i}><b>{i + 1}일차</b> {s}</li>)}
       </ol>
 
       <h4>예약 페이지로 바로 가기 <small>(새 창에서 해당 사이트 예약·상품 페이지가 열립니다)</small></h4>
@@ -142,6 +142,7 @@ export function Calendar({ trips, c }: { trips: TripCandidate[]; c: Conditions }
     if (JP_HOLIDAYS.includes(d)) cls.push('jp-holiday')
     if (d >= PEAK_START) cls.push('peak')
     if (d < c.startDate || d > c.endDate) cls.push('out')
+    if (leaveRestricted(c) && !c.leaveDays.includes(w)) cls.push('noleave')
     return cls.join(' ')
   }
   return (

@@ -44,7 +44,7 @@ export default function App() {
         <div>
           <p className="eyebrow">성인 {c.adults} · 아이 {c.childAges.length}명 · 11~12월 · 해외 2회</p>
           <h1>가족여행 최저가 플래너</h1>
-          <p className="muted">한 번은 일본(관광·온천·맛집), 항공+숙박+체류비 합계가 가장 싼 조합을 찾습니다.</p>
+          <p className="muted">한 번은 일본(관광·온천·맛집), 휴가 요일에 맞는 항공+숙박+체류비 합계 최저 조합을 찾습니다.</p>
         </div>
         <nav className="tabs">
           <button className={tab === 'plan' ? 'on' : ''} onClick={() => setTab('plan')}>최저가 플랜</button>
@@ -68,6 +68,15 @@ export default function App() {
             <div className="row2">
               <label>시작일<input type="date" value={c.startDate} min="2026-11-01" max="2026-12-31" onChange={(e) => set('startDate', e.target.value)} /></label>
               <label>종료일<input type="date" value={c.endDate} min="2026-11-01" max="2026-12-31" onChange={(e) => set('endDate', e.target.value)} /></label>
+            </div>
+            <div className="leave">
+              <span className="leave-title">휴가 가능 요일 <small>(여행 전체가 이 요일 안에 들어와야 함)</small></span>
+              <div className="weekdays">
+                {['일', '월', '화', '수', '목', '금', '토'].map((w, i) => (
+                  <button key={w} type="button" className={c.leaveDays.includes(i) ? 'on' : ''}
+                    onClick={() => set('leaveDays', c.leaveDays.includes(i) ? c.leaveDays.filter((x) => x !== i) : [...c.leaveDays, i].sort())}>{w}</button>
+                ))}
+              </div>
             </div>
             <label>여행 1회당 체험학습 최대 <b>{c.maxSchoolDays}일</b>
               <input type="range" min={0} max={5} value={c.maxSchoolDays} onChange={(e) => set('maxSchoolDays', Number(e.target.value))} />

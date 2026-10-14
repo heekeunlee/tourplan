@@ -199,3 +199,10 @@ a.book:hover { background: var(--a-soft); }
 .lv-start.lv { background: var(--c-food); }
 .agency.book { text-decoration: none; color: var(--text); }
 .agency.book strong { color: var(--a); }
+
+.leave { display: grid; gap: 6px; }
+.leave-title { font-size: .9rem; font-weight: 600; }
+.weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.weekdays button { font: inherit; padding: 6px 0; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); cursor: pointer; }
+.weekdays button.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.day.noleave { opacity: .45; }

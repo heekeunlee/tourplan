@@ -7,6 +7,7 @@ export interface Conditions {
   childAges: number[]
   startDate: string
   endDate: string
+  leaveDays: number[] // 부모가 휴가 가능한 요일 (0=일 … 6=토), 비우거나 7개면 제한 없음
   maxSchoolDays: number // 1회 여행당 체험학습 최대 일수
   schoolPenalty: number // 체험학습 1일을 비용 몇 만원으로 볼지 (정렬용)
   minGapDays: number
@@ -19,6 +20,7 @@ export interface Conditions {
 export const DEFAULT_CONDITIONS: Conditions = {
   origin: 'ICN',
   japanFromGimpo: true,
+  leaveDays: [0, 1, 2, 3],
   adults: 2,
   childAges: [8, 10],
   startDate: '2026-11-02',
@@ -38,6 +40,7 @@ export interface TripCandidate {
   dest: Destination
   origin: string
   route: Route
+  nights: number
   depart: string
   ret: string
   checkIn: string
@@ -56,6 +59,8 @@ export interface Combo {
   score: number
 }
 
+// 휴가 요일 때문에 줄어든 숙박 1박당 점수 가산 (만원) — 같은 결석일이면 더 긴 여행을 우선
+const SHORT_NIGHT_PENALTY = 40
 const DAY = 86400000
 const toTime = (s: string) => Date.parse(s + 'T00:00:00Z')
 export const toISO = (t: number) => new Date(t).toISOString().slice(0, 10)
@@ -86,8 +91,10 @@ export function originsFor(dest: Destination, c: Conditions) {
   return list.filter((o) => dest.routes[o])
 }
 
-export function buildTrip(dest: Destination, depart: string, c: Conditions, origin = c.origin): TripCandidate | null {
-  const ret = addDays(depart, dest.nights + (dest.redEye ? 1 : 0))
+export const leaveRestricted = (c: Conditions) => c.leaveDays.length > 0 && c.leaveDays.length < 7
+
+export function buildTrip(dest: Destination, depart: string, c: Conditions, origin = c.origin, nights = dest.nights): TripCandidate | null {
+  const ret = addDays(depart, nights + (dest.redEye ? 1 : 0))
   if (depart < c.startDate || ret > c.endDate) return null
   const route = dest.routes[origin]
   if (!route) return null
@@ -99,6 +106,8 @@ export function buildTrip(dest: Destination, depart: string, c: Conditions, orig
   if (c.excludeBadWeather && weather === 'bad') return null
 
   const days = datesBetween(depart, ret)
+  // 야간편 귀국일(새벽 도착)도 휴가가 필요한 날로 본다
+  if (leaveRestricted(c) && !days.every((d) => c.leaveDays.includes(weekday(d)))) return null
   // 야간 출발은 하교 후 출발로 보고 출발일은 결석에서 제외
   const schoolDays = days.filter((d, i) => {
     if (dest.redEye && i === 0) return false
@@ -108,6 +117,7 @@ export function buildTrip(dest: Destination, depart: string, c: Conditions, orig
   if (schoolDays > c.maxSchoolDays) return null
 
   const notes: string[] = []
+  if (nights < dest.nights) notes.push(`휴가 요일에 맞춰 ${nights}박으로 단축`)
   let flightF = DEPART_FACTOR[weekday(depart)]
   if (weekday(ret) === 0) flightF += 0.06
   if (weekday(ret) === 6) flightF += 0.03
@@ -131,12 +141,13 @@ export function buildTrip(dest: Destination, depart: string, c: Conditions, orig
   const originF = route.factor ?? 1
 
   const flight = scale(dest.flightPP, seats * flightF * originF)
-  const normalNights = dest.specialNight ? dest.nights - 1 : dest.nights
+  const normalNights = dest.specialNight ? nights - 1 : nights
   let hotel = scale(dest.hotelNight, normalNights * hotelF * roomF)
   if (dest.specialNight) hotel = sum(hotel, scale(dest.specialNight.price, hotelF * (eaters / 3.4)))
-  const food = scale(dest.foodPPDay, eaters * (dest.nights + 1))
+  const food = scale(dest.foodPPDay, eaters * (nights + 1))
   const transfer = route.transferSave ?? 0
-  const local = sum(scale([dest.transport[0] - transfer, dest.transport[1] - transfer], people / 4), scale(dest.activities, people / 4))
+  const lenF = (nights + 1) / (dest.nights + 1)
+  const local = sum(scale([dest.transport[0] - transfer, dest.transport[1] - transfer], (people / 4) * lenF), scale(dest.activities, (people / 4) * lenF))
   const total = sum(flight, hotel, food, local)
 
   if (origin === 'GMP' && route.note) notes.push(route.note)
@@ -145,14 +156,15 @@ export function buildTrip(dest: Destination, depart: string, c: Conditions, orig
     dest,
     origin,
     route,
+    nights,
     depart,
     ret,
     checkIn: depart,
-    checkOut: addDays(depart, dest.nights),
+    checkOut: addDays(depart, nights),
     schoolDays,
     cost: { flight, hotel, food, local, total },
     notes,
-    score: total.mid + schoolDays * c.schoolPenalty,
+    score: total.mid + schoolDays * c.schoolPenalty + (dest.nights - nights) * SHORT_NIGHT_PENALTY,
   }
 }
 
@@ -161,8 +173,11 @@ export function allCandidates(c: Conditions, dests = DESTINATIONS) {
   for (const dest of dests) {
     for (const origin of originsFor(dest, c)) {
       for (let d = c.startDate; d <= c.endDate; d = addDays(d, 1)) {
-        const t = buildTrip(dest, d, c, origin)
-        if (t) out.push(t)
+        // 휴가 요일에 맞는 가장 긴 숙박일수를 선택
+        for (let n = dest.nights; n >= (leaveRestricted(c) ? 2 : dest.nights); n--) {
+          const t = buildTrip(dest, d, c, origin, n)
+          if (t) { out.push(t); break }
+        }
       }
     }
   }

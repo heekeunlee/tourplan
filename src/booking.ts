@@ -112,7 +112,7 @@ export function bookingLinks(t: TripCandidate, c: Conditions): BookLink[] {
     url: `https://www.booking.com/searchresults.ko.html?ss=${q(kw)}&checkin=${t.checkIn}&checkout=${t.checkOut}&group_adults=${c.adults}&group_children=${kids}${ageParams}&no_rooms=1&order=price&selected_currency=KRW` })
   if (m.agoda) {
     out.push({ group: '숙소', name: '아고다', level: 'direct',
-      url: `https://www.agoda.com/ko-kr/search?city=${m.agoda}&checkIn=${t.checkIn}&checkOut=${t.checkOut}&los=${dest.nights}&rooms=1&adults=${c.adults}&children=${kids}&childAges=${ageList}` })
+      url: `https://www.agoda.com/ko-kr/search?city=${m.agoda}&checkIn=${t.checkIn}&checkOut=${t.checkOut}&los=${t.nights}&rooms=1&adults=${c.adults}&children=${kids}&childAges=${ageList}` })
   }
   if (m.tripcom) {
     out.push({ group: '숙소', name: '트립닷컴', level: 'direct',
