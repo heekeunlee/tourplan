@@ -191,3 +191,8 @@ a.book:hover { background: var(--a-soft); }
 .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 .seg button { font: inherit; padding: 6px 0; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); cursor: pointer; }
 .seg button.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+
+.combo-trip { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; }
+.trip-no { font-size: .75rem; font-weight: 700; color: #fff; background: var(--a); border-radius: 6px; padding: 2px 6px; }
+.combo-trip:nth-of-type(3) .trip-no { background: var(--b); }
+.trip-main { display: grid; min-width: 0; }

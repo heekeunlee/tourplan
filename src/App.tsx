@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { AGENCIES, AGENCY_KINDS } from './agencies'
 import { bookingLinks, GROUPS, LEVEL_LABEL, primaryLink } from './booking'
 import { Calendar, CostBar, TripDetail, WEATHER_LABEL, won, wonRange } from './components'
-import { DESTINATIONS, ORIGINS } from './data'
+import { countryOf, DESTINATIONS, ORIGINS } from './data'
 import { bestCombos, bestDatesFor, DEFAULT_CONDITIONS, fmtDate, originsFor, type Conditions, type TripCandidate } from './planner'
 
 const STORE_KEY = 'tourplan.conditions.v1'
@@ -112,20 +112,25 @@ export default function App() {
               {combos.length === 0 && <p className="panel">조건에 맞는 조합이 없습니다. 체험학습 일수나 기간을 늘려 보세요.</p>}
               <div className="combos">
                 {combos.map((cb, i) => (
-                  <div key={cb.a.dest.id + cb.b.dest.id} role="button" tabIndex={0} className={`combo ${i === selected ? 'on' : ''}`} onClick={() => setSelected(i)} onKeyDown={(e) => { if (e.key === 'Enter') setSelected(i) }}>
+                  <div key={cb.a.dest.id + cb.b.dest.id + cb.a.depart} role="button" tabIndex={0} className={`combo ${i === selected ? 'on' : ''}`} onClick={() => setSelected(i)} onKeyDown={(e) => { if (e.key === 'Enter') setSelected(i) }}>
                     <div className="combo-head">
                       <span className="rank">{i + 1}</span>
                       <strong>{wonRange(cb.total)}</strong>
                       <span className={cb.total.mid <= c.budget ? 'badge good' : 'badge warn'}>{cb.total.mid <= c.budget ? '예산 내' : '예산 초과'}</span>
                     </div>
-                    {[cb.a, cb.b].map((t) => (
-                      <div key={t.dest.id} className="combo-trip">
-                        <span>{t.dest.flag} {t.dest.name} <small className="muted">{t.origin}→{t.route.airport}</small></span>
-                        <span className="muted">{fmtDate(t.depart)}~{fmtDate(t.ret)}</span>
+                    {[cb.a, cb.b].map((t, n) => (
+                      <div key={n} className="combo-trip">
+                        <span className="trip-no">{n + 1}차</span>
+                        <div className="trip-main">
+                          <span>{t.dest.flag} {t.dest.name}</span>
+                          <span className="muted small">출국 {fmtDate(t.depart)} {ORIGINS[t.origin]}→{t.route.airport} · 입국 {fmtDate(t.ret)}</span>
+                        </div>
                         <a className="go" href={primaryLink(t, c).url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>예약 ↗</a>
                       </div>
                     ))}
-                    <span className="muted small">체험학습 총 {cb.schoolDays}일</span>
+                    <span className="muted small">
+                      출·입국 2회 · {countryOf(cb.a.dest) === countryOf(cb.b.dest) ? `${countryOf(cb.a.dest)} 1개국` : `${countryOf(cb.a.dest)}+${countryOf(cb.b.dest)} 2개국`} · 체험학습 {cb.schoolDays}일
+                    </span>
                   </div>
                 ))}
               </div>

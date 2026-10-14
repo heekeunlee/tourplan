@@ -192,7 +192,9 @@ export function bestCombos(c: Conditions, limit = 8): Combo[] {
   const best = new Map<string, Combo>()
   for (const a of cands) {
     for (const b of cands) {
-      if (b.depart <= a.depart || a.dest.id === b.dest.id) continue
+      if (b.depart <= a.depart) continue
+      // 같은 도시 재방문은 '1개국' 모드에서만 허용
+      if (a.dest.id === b.dest.id && c.countryMode !== 'one') continue
       if (diffDays(a.ret, b.depart) < c.minGapDays) continue
       const sameCountry = countryOf(a.dest) === countryOf(b.dest)
       if (c.countryMode === 'one' && !sameCountry) continue
