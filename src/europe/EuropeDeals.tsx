@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { DEALS, FAMILY, SEARCHED_AT, SOURCES, WINDOW, type Deal } from './deals'
+import { DEALS, FAMILY, KIDS_EXCLUDED, SEARCHED_AT, SOURCES, WINDOW, type Deal } from './deals'
 
 const people = FAMILY.adults + FAMILY.children
 const man = (n: number) => `${(n / 10000).toLocaleString('ko-KR', { maximumFractionDigits: 1 })}만원`
@@ -10,15 +10,15 @@ const daysOver = (d: Deal) => Math.round((Date.parse(d.ret) - Date.parse(WINDOW.
 
 type Sort = 'total' | 'cities'
 
-export default function EuropeDeals() {
+export default function EuropeDeals({ deals = DEALS, kids = false }: { deals?: Deal[]; kids?: boolean }) {
   const [sort, setSort] = useState<Sort>('total')
   const [onlyWindow, setOnlyWindow] = useState(false)
   const [rate, setRate] = useState(1700)
 
   const list = useMemo(() => {
-    const items = DEALS.filter((d) => !onlyWindow || daysOver(d) <= 0)
+    const items = deals.filter((d) => !onlyWindow || daysOver(d) <= 0)
     return [...items].sort((a, b) => (sort === 'total' ? Number(daysOver(a) > 0) - Number(daysOver(b) > 0) || a.price - b.price : b.cities.length - a.cities.length || a.price - b.price))
-  }, [sort, onlyWindow])
+  }, [deals, sort, onlyWindow])
 
   return (
     <main className="eu">
@@ -43,7 +43,7 @@ export default function EuropeDeals() {
       <section className="deals">
         {list.map((d, i) => {
           const over = daysOver(d)
-          const total = d.price * people
+          const total = d.price * FAMILY.adults + (d.childPrice ?? d.price) * FAMILY.children
           const guide = (d.guideEur ?? (d.id === 'hana-it-tw' ? 90 : 0)) * people * rate
           return (
             <article key={d.id} className={`deal ${over <= 0 ? 'in' : 'out'}${d.added ? ' added' : ''}`}>
@@ -67,11 +67,13 @@ export default function EuropeDeals() {
                   <small className="muted">일정</small>
                   <b>{dayLabel(d.depart)} → {dayLabel(d.ret)}{d.retEstimated ? ' (추정)' : ''}</b>
                   <span className="muted small">{d.nights}박 · {d.hotel} · {d.shopping}</span>
+                  {d.hotelRoute && <span className="route-chip">숙박: {d.hotelRoute}</span>}
                 </div>
                 <div>
                   <small className="muted">1인</small>
                   <b>{man(d.price)}</b>
                   {d.listPrice && <span className="muted small"><s>{man(d.listPrice)}</s></span>}
+                  {d.childPrice && <span className="muted small">아동 {man(d.childPrice)}</span>}
                 </div>
                 <div className="total">
                   <small className="muted">4인 합계</small>
@@ -90,12 +92,21 @@ export default function EuropeDeals() {
         {list.length === 0 && <p className="panel">조건에 맞는 상품이 없습니다.</p>}
       </section>
 
-      <section className="panel">
-        <h2>어디를 검색했나</h2>
-        <ul className="tips">
-          {SOURCES.map((s) => <li key={s.name}><b>{s.name}</b> — {s.how}. <span className="muted">{s.found}</span></li>)}
-        </ul>
-      </section>
+      {kids ? (
+        <section className="panel">
+          <h2>제외한 상품과 이유</h2>
+          <ul className="tips">
+            {KIDS_EXCLUDED.map((x) => <li key={x.title}><b>{x.title}</b> — <span className="muted">{x.why}</span></li>)}
+          </ul>
+        </section>
+      ) : (
+        <section className="panel">
+          <h2>어디를 검색했나</h2>
+          <ul className="tips">
+            {SOURCES.map((s) => <li key={s.name}><b>{s.name}</b> — {s.how}. <span className="muted">{s.found}</span></li>)}
+          </ul>
+        </section>
+      )}
     </main>
   )
 }

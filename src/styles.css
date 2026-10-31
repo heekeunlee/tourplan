@@ -225,3 +225,5 @@ a.book:hover { background: var(--a-soft); }
 
 .new-tag { background: #e8271c; color: #fff; border-color: transparent; font-weight: 800; }
 .deal.added { box-shadow: 0 0 0 2px rgba(232, 39, 28, .25); }
+
+.route-chip { display: inline-block; margin-top: 4px; background: var(--b-soft); color: var(--good); font-weight: 700; font-size: .82rem; padding: 2px 8px; border-radius: 8px; justify-self: start; }
