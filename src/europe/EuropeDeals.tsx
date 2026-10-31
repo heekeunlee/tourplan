@@ -56,7 +56,7 @@ export default function EuropeDeals() {
                     <span className="chip">{d.agency}</span>
                     <span className={`chip ${d.national ? 'w-ok' : ''}`}>{d.airline}</span>
                     {d.urgent && <span className="chip w-bad">긴급모객</span>}
-                    {d.status.includes('출발확정') && !d.urgent && <span className="chip w-good">출발확정</span>}
+                    {d.status.startsWith('출발확정') && !d.urgent && <span className="chip w-good">출발확정</span>}
                     <span className={`chip ${over <= 0 ? 'w-good' : 'w-bad'}`}>{over <= 0 ? '기간 안' : `${over}일 초과`}</span>
                     {!d.verified && <span className="chip">일부 미확인</span>}
                   </div>
