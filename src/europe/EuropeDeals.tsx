@@ -17,7 +17,7 @@ export default function EuropeDeals() {
 
   const list = useMemo(() => {
     const items = DEALS.filter((d) => !onlyWindow || daysOver(d) <= 0)
-    return [...items].sort((a, b) => (sort === 'total' ? a.price - b.price : b.cities.length - a.cities.length || a.price - b.price))
+    return [...items].sort((a, b) => (sort === 'total' ? Number(daysOver(a) > 0) - Number(daysOver(b) > 0) || a.price - b.price : b.cities.length - a.cities.length || a.price - b.price))
   }, [sort, onlyWindow])
 
   return (
@@ -32,7 +32,7 @@ export default function EuropeDeals() {
         </p>
         <div className="eu-controls">
           <div className="seg two">
-            <button className={sort === 'total' ? 'on' : ''} onClick={() => setSort('total')}>4인 총액 낮은순</button>
+            <button className={sort === 'total' ? 'on' : ''} onClick={() => setSort('total')}>기간 안 우선 · 낮은가격순</button>
             <button className={sort === 'cities' ? 'on' : ''} onClick={() => setSort('cities')}>관광지 많은순</button>
           </div>
           <label className="check"><input type="checkbox" checked={onlyWindow} onChange={(e) => setOnlyWindow(e.target.checked)} />{md(WINDOW.to)} 이내 귀국만</label>
