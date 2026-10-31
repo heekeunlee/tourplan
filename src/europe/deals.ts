@@ -1,0 +1,221 @@
+// 크롬 브라우저로 직접 검색한 유럽 패키지 결과 (조회일 2026-10-31, 인천 출발, 1인 성인 기준 가격)
+// 가격·잔여석은 수시로 바뀌므로 링크에서 반드시 재확인한다.
+
+export const SEARCHED_AT = '2026-10-31'
+export const WINDOW = { from: '2026-11-22', to: '2026-11-30' }
+export const FAMILY = { adults: 2, children: 2, childAges: '소아 2 (초등)' }
+
+export interface Deal {
+  id: string
+  agency: string
+  title: string
+  airline: string
+  national: boolean // 국적기 여부
+  depart: string
+  ret: string
+  retEstimated?: boolean // 귀국일을 상품 기간으로 추정한 경우
+  nights: number
+  price: number // 1인, 원
+  listPrice?: number
+  childSame: boolean // 아동(만12세 미만) 요금이 성인과 같음을 상세에서 확인했는지
+  hotel: string
+  shopping: string
+  status: string
+  seats?: string
+  urgent?: boolean // 출발확정임박 등 긴급모객 성격
+  cities: string[]
+  highlights: string
+  fees: string
+  url: string
+  verified: boolean // 상세 페이지까지 확인했는지
+  note?: string
+}
+
+const hana = 'https://www.hanatour.com/package/major-products'
+const q = '&depCityCd=JCN&pkgServiceCd=FP&trvlDayCnt='
+
+export const DEALS: Deal[] = [
+  {
+    id: 'hana-it-tw',
+    agency: '하나투어',
+    title: '[출발확정] 이탈리아 완전일주 9일 · 전일정 4성호텔 · 바티칸 내부입장',
+    airline: '트리니티항공(구 티웨이)',
+    national: false,
+    depart: '2026-11-22',
+    ret: '2026-11-30',
+    nights: 7,
+    price: 2705400,
+    listPrice: 3589600,
+    childSame: true,
+    hotel: '4성급',
+    shopping: '쇼핑 2회',
+    status: '출발확정',
+    seats: '잔여 5석 (4인 예약 가능, 서두르기)',
+    cities: ['로마', '폼페이', '피렌체', '베네치아', '친퀘테레', '피사', '시에나', '오르비에토', '몬테풀차노', '치비타 디 반뇨레죠'],
+    highlights: '바티칸 박물관 내부입장 · 폼페이 · 친퀘테레 · 토스카나 중세 소도시 · 9대 특식',
+    fees: '유류할증료 59.96만원 포함 / 가이드·기사 경비 1인 €90(15명 미만 시 +€20~30) 별도 / 1인 객실 +50만원',
+    url: 'https://www.hanatour.com/trp/pkg/CHPC0PKG0200M200?pkgCd=EWP171261122TWW&prePage=major-products',
+    verified: true,
+    note: '상세 가격표에서 아동(만 12세 미만) 요금이 성인과 동일(270.54만원)함을 확인',
+  },
+  {
+    id: 'hana-it-ke',
+    agency: '하나투어',
+    title: '이탈리아 일주 9일 · 바티칸·남부투어·돌로미티·피사 · 전일정 4성 · 국적기',
+    airline: '대한항공',
+    national: true,
+    depart: '2026-11-22',
+    ret: '2026-11-30',
+    nights: 7,
+    price: 3299000,
+    childSame: false,
+    hotel: '4성급',
+    shopping: '쇼핑 2회',
+    status: '예약가능',
+    seats: '잔여 21석',
+    cities: ['베네치아', '로마', '피렌체', '폼페이', '피사', '밀라노', '돌로미티', '남부투어'],
+    highlights: '국적기 직항 · 베네치아 대운하 · 폼페이 역사투어 · 밀라노 자유시간',
+    fees: '유류·제세금, 가이드 경비는 상세에서 확인',
+    url: `${hana}?cntryCd=IT&cityCd=ROM&cityNm=%EB%A1%9C%EB%A7%88&strtDepDay=20261122&endDepDay=20261122${q}`,
+    verified: false,
+    note: '아동 요금·출발확정 여부는 상세에서 확인 필요',
+  },
+  {
+    id: 'hana-ee-ke',
+    agency: '하나투어',
+    title: '[초특가DAY·출발확정임박] 동유럽 3국 9일 · 국적기 직항 · 프라하/부다페스트 야간투어',
+    airline: '대한항공',
+    national: true,
+    depart: '2026-11-23',
+    ret: '2026-12-01',
+    nights: 7,
+    price: 2499000,
+    listPrice: 2788200,
+    childSame: false,
+    hotel: '4성급 (2박)',
+    shopping: '쇼핑 3회',
+    status: '출발확정임박 (긴급모객)',
+    seats: '잔여 7석',
+    urgent: true,
+    cities: ['비엔나', '쇤브룬궁전', '할슈타트', '잘츠카머구트', '체스키크룸로프', '프라하', '부다페스트', '판도르프'],
+    highlights: '야경 투어 2회로 해가 짧은 겨울에도 알참 · 할슈타트 · 쇤브룬궁전',
+    fees: '유류·제세금, 가이드 경비는 상세에서 확인',
+    url: `${hana}?cntryCd=CZ&cityCd=PRG&cityNm=%ED%94%84%EB%9D%BC%ED%95%98&strtDepDay=20261123&endDepDay=20261124${q}`,
+    verified: true,
+    note: '목록에서 11/23(월) 출발 249.9만원 확인. 귀국이 12/1이라 기간을 하루 넘김',
+  },
+  {
+    id: 'mode-it',
+    agency: '모두투어',
+    title: '[유럽감사제] 이탈리아 일주 9~10일',
+    airline: '대한항공 / 아시아나항공',
+    national: true,
+    depart: '2026-11-24',
+    ret: '2026-12-02',
+    retEstimated: true,
+    nights: 7,
+    price: 2799000,
+    childSame: false,
+    hotel: '4성급 추정',
+    shopping: '확인 필요',
+    status: '예약가능 (11/24 월별 최저가)',
+    cities: ['로마', '피렌체', '베네치아'],
+    highlights: '국적기 · 11/23 299만, 11/24 279만, 11/28 299만 (11/22 출발 없음)',
+    fees: '상세에서 확인',
+    url: 'https://www.modetour.com/package/search-result?ty=o&dm=p&akn=6837&tn=0&sf=2026-11-22&st=2026-11-30&sb=d&rg=%EC%84%9C%EC%9C%A0%EB%9F%BD&git=GMTUnion&f.sp=SEL&f.tn=%ED%8C%A8%ED%82%A4%EC%A7%80',
+    verified: false,
+    note: '달력의 출발일별 최저가 확인. 귀국일은 7박9일로 추정. 기간을 2일 넘김',
+  },
+  {
+    id: 'hana-cz',
+    agency: '하나투어',
+    title: '[우리끼리] 체코 일주 9일 · 소규모 단독',
+    airline: '확인 필요',
+    national: false,
+    depart: '2026-11-22',
+    ret: '2026-11-30',
+    retEstimated: true,
+    nights: 7,
+    price: 2999000,
+    childSame: false,
+    hotel: '확인 필요',
+    shopping: '확인 필요',
+    status: '예약가능',
+    cities: ['프라하', '체코 소도시'],
+    highlights: '체코 1개국 · 관광지 수는 적은 대신 여유로운 일정',
+    fees: '상세에서 확인',
+    url: `${hana}?cntryCd=CZ&cityCd=PRG&cityNm=%ED%94%84%EB%9D%BC%ED%95%98&strtDepDay=20261122&endDepDay=20261122${q}`,
+    verified: false,
+  },
+  {
+    id: 'hana-fr',
+    agency: '하나투어',
+    title: '프랑스 파리와 근교 북부 노르망디 몽생미쉘 6/7일 · 실속여행',
+    airline: '확인 필요',
+    national: false,
+    depart: '2026-11-22',
+    ret: '2026-11-28',
+    retEstimated: true,
+    nights: 5,
+    price: 3299000,
+    childSame: false,
+    hotel: '확인 필요',
+    shopping: '확인 필요',
+    status: '예약가능',
+    cities: ['파리', '몽생미쉘', '옹플뢰르', '지베르니', '베르사유'],
+    highlights: '7일 일정이라 일정 여유(기간 안에서 가장 짧음)',
+    fees: '상세에서 확인',
+    url: `${hana}?cntryCd=FR&cityCd=PAR&cityNm=%ED%8C%8C%EB%A6%AC&strtDepDay=20261122&endDepDay=20261122${q}`,
+    verified: false,
+  },
+  {
+    id: 'hana-we3',
+    agency: '하나투어',
+    title: '서유럽 3국 8일~12일 · 실속여행 (이탈리아/스위스/프랑스)',
+    airline: '확인 필요',
+    national: false,
+    depart: '2026-11-22',
+    ret: '2026-11-30',
+    retEstimated: true,
+    nights: 7,
+    price: 4099000,
+    childSame: false,
+    hotel: '확인 필요',
+    shopping: '확인 필요',
+    status: '예약가능',
+    cities: ['로마', '피렌체', '베네치아', '루체른', '인터라켄', '파리'],
+    highlights: '3개국 · 대표 관광지 많음, 이동 시간도 김',
+    fees: '상세에서 확인',
+    url: `${hana}?cntryCd=IT&cityCd=ROM&cityNm=%EB%A1%9C%EB%A7%88&strtDepDay=20261122&endDepDay=20261122${q}`,
+    verified: false,
+  },
+  {
+    id: 'hana-ee-low',
+    agency: '하나투어',
+    title: '동유럽 인기 3~4국 핵심일주 7~9일 · 가성비UP · 2대 야경투어',
+    airline: '확인 필요',
+    national: false,
+    depart: '2026-11-25',
+    ret: '2026-12-03',
+    retEstimated: true,
+    nights: 7,
+    price: 2099000,
+    childSame: false,
+    hotel: '확인 필요',
+    shopping: '확인 필요',
+    status: '11/25·11/27 출발 최저가 (참고용)',
+    cities: ['프라하', '비엔나', '부다페스트'],
+    highlights: '전체 기간 중 가장 싼 출발일. 7일형이면 12/1 귀국 가능성이 있으나 미확인',
+    fees: '상세에서 확인',
+    url: `${hana}?cntryCd=CZ&cityCd=PRG&cityNm=%ED%94%84%EB%9D%BC%ED%95%98&strtDepDay=20261125&endDepDay=20261127${q}`,
+    verified: false,
+    note: '달력 최저가만 확인, 상품 상세·일정은 미확인',
+  },
+]
+
+export const SOURCES = [
+  { name: '하나투어', how: '파리·로마·프라하·바르셀로나 목록을 출발일 지정(11/22 단일, 11/23~24)으로 조회', found: '이탈리아·동유럽·프랑스 상품 확인, 이탈리아 상품은 상세 페이지까지 확인' },
+  { name: '모두투어', how: '서유럽 전체 검색(11/22~11/30), 이탈리아 상품 달력 확인', found: '11/22 출발 없음, 11/24 출발 대한항공 279만원이 최저' },
+  { name: '참좋은여행', how: '서유럽 검색 결과 확인', found: '10일 이상 일정 위주라 11/30 귀국 조건에 맞지 않아 제외' },
+  { name: '롯데관광·노랑풍선', how: '키워드 검색 확인', found: '키워드 결과가 후기·크루즈 위주이거나 화면이 비어 조건 조회 불가, 이번 비교에서 제외' },
+]
