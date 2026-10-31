@@ -29,6 +29,8 @@ export interface Deal {
   url: string
   verified: boolean // 상세 페이지까지 확인했는지
   note?: string
+  guideEur?: number // 가이드·기사 경비 (유로/인)
+  added?: boolean // 기존 결과에 이어 새로 찾아 추가한 상품 (카드에 '추가' 딱지)
 }
 
 const hana = 'https://www.hanatour.com/package/major-products'
@@ -57,6 +59,53 @@ export const DEALS: Deal[] = [
     url: 'https://www.hanatour.com/trp/pkg/CHPC0PKG0200M200?pkgCd=EWP171261122TWW&prePage=major-products',
     verified: true,
     note: '상세 가격표에서 아동(만 12세 미만) 요금이 성인과 동일(270.54만원)함을 확인',
+  },
+  {
+    id: 'vg-ee',
+    added: true,
+    agency: '참좋은여행',
+    title: '[완벽한 밀도] 동유럽 3개국 7일 · 헝가리/오스트리아/체코 · 2대 야경 & 궁전',
+    airline: '아시아나항공',
+    national: true,
+    depart: '2026-11-24',
+    ret: '2026-11-30',
+    nights: 6,
+    price: 2292000,
+    childSame: true,
+    hotel: '투어리스트급 또는 일급',
+    shopping: '쇼핑 3회',
+    status: '예약가능 · 아직 출발확정 전 (예약 10명 / 최소출발 20명)',
+    seats: '인원 미달 시 취소 가능성 있음',
+    cities: ['프라하', '비엔나', '부다페스트', '체코·오스트리아·헝가리 소도시'],
+    highlights: '기간 안에서 가장 싼 국적기 상품. 같은 상품 11/22(일) 대한항공 출발은 1인 253만원, 11/28 귀국',
+    fees: '유류할증료 70.2만원 포함 / 가이드·기사 경비 1인 €70(성인·아동 동일) 별도',
+    url: 'https://www.verygoodtour.com/Search/SearchList?Keyword=%EC%9C%A0%EB%9F%BD&SearchTitle=%EC%9C%A0%EB%9F%BD#orderby=4&CfmYN=&depdate=2026-11-22&weekday=1&day=&price=&airlineType=&pageIndex=1&branchCodes=&type=',
+    verified: true,
+    note: '상세 가격표에서 아동 요금이 성인과 동일(229.2만원)함을 확인. 링크는 11/22 출발 필터가 적용된 목록(상품코드 EPP4707)이며 "출발일 선택"에서 11/24를 고르세요',
+    guideEur: 70,
+  },
+  {
+    id: 'yb-it-tw',
+    added: true,
+    agency: '노랑풍선',
+    title: '이탈리아 일주 9일 TW · 전일정 4성호텔 · 10대 특식 · 베드로성당 사전예약',
+    airline: '트리니티항공(구 티웨이)',
+    national: false,
+    depart: '2026-11-22',
+    ret: '2026-11-30',
+    nights: 7,
+    price: 2790000,
+    childSame: false,
+    hotel: '4성급 전일정',
+    shopping: '확인 필요',
+    status: '예약가능 · 출발예정 (확정 전)',
+    seats: '잔여 10석 · 쿠폰 10만원 표기',
+    cities: ['로마', '피렌체', '친퀘테레', '남부투어', '베네치아'],
+    highlights: '하나투어 이탈리아 상품과 같은 일정·같은 항공. 쿠폰 적용 여부에 따라 하나투어(270.5만원)와 비슷한 가격',
+    fees: '상세에서 확인',
+    url: 'https://pkg.ybtour.co.kr/search/searchPdt.yb?query=EWP4138',
+    verified: true,
+    note: '출발일 보기에서 11/22(일) 11:00 → 11/30(월) 14:50 확인. 링크는 상품코드 EWP4138 검색 결과',
   },
   {
     id: 'hana-it-ke',
@@ -216,6 +265,7 @@ export const DEALS: Deal[] = [
 export const SOURCES = [
   { name: '하나투어', how: '파리·로마·프라하·바르셀로나 목록을 출발일 지정(11/22 단일, 11/23~24)으로 조회', found: '이탈리아·동유럽·프랑스 상품 확인, 이탈리아 상품은 상세 페이지까지 확인' },
   { name: '모두투어', how: '서유럽 전체 검색(11/22~11/30), 이탈리아 상품 달력 확인', found: '11/22 출발 없음, 11/24 출발 대한항공 279만원이 최저' },
-  { name: '참좋은여행', how: '서유럽 검색 결과 확인', found: '10일 이상 일정 위주라 11/30 귀국 조건에 맞지 않아 제외' },
-  { name: '롯데관광·노랑풍선', how: '키워드 검색 확인', found: '키워드 결과가 후기·크루즈 위주이거나 화면이 비어 조건 조회 불가, 이번 비교에서 제외' },
+  { name: '참좋은여행', how: '유럽 검색에서 여행 시작일 11/22 필터 적용(12개), 동유럽 7일 상품의 출발일별 요금과 상세 가격표 확인', found: '동유럽 3개국 7일 11/24 출발 229.2만원(아동 동일), 11/30 귀국 — 기간 안 최저가' },
+  { name: '노랑풍선', how: '유럽 > 서유럽(1개국) 21개 목록에서 출발일 11/22 필터(4개), 이탈리아 상품 출발일 확인', found: '이탈리아 일주 9일 TW 279만원(11/22~11/30). 프랑스 일주 439만원, 스위스 523만원' },
+  { name: '롯데관광', how: '서유럽·이탈리아·동유럽/발칸 목록(출발확정 날짜) 확인', found: '11/22~11/30 안에 출발확정인 상품 없음. 가장 가까운 것은 서유럽 3개국 10일(OZ) 11/25 출발 429만원~, 이탈리아 8일(OZ) 11/29 출발 339만원~ 으로 귀국이 12/4~12/6' },
 ]

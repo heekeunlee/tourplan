@@ -222,3 +222,6 @@ a.book:hover { background: var(--a-soft); }
 .book-btn { justify-self: start; margin-top: 6px; background: var(--accent); color: #fff; text-decoration: none; font-weight: 700; padding: 8px 14px; border-radius: 10px; }
 .book-btn:hover { filter: brightness(.95); }
 @media (max-width: 600px) { .deal-grid { grid-template-columns: 1fr 1fr; } .deal-grid > div:first-child { grid-column: 1 / -1; } }
+
+.new-tag { background: #e8271c; color: #fff; border-color: transparent; font-weight: 800; }
+.deal.added { box-shadow: 0 0 0 2px rgba(232, 39, 28, .25); }

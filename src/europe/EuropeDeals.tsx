@@ -44,14 +44,15 @@ export default function EuropeDeals() {
         {list.map((d, i) => {
           const over = daysOver(d)
           const total = d.price * people
-          const guide = d.id === 'hana-it-tw' ? 90 * people * rate : 0
+          const guide = (d.guideEur ?? (d.id === 'hana-it-tw' ? 90 : 0)) * people * rate
           return (
-            <article key={d.id} className={`deal ${over <= 0 ? 'in' : 'out'}`}>
+            <article key={d.id} className={`deal ${over <= 0 ? 'in' : 'out'}${d.added ? ' added' : ''}`}>
               <header>
                 <span className="rank">{i + 1}</span>
                 <div className="deal-title">
                   <a href={d.url} target="_blank" rel="noreferrer">{d.title} ↗</a>
                   <div className="chips">
+                    {d.added && <span className="chip new-tag">추가</span>}
                     <span className="chip">{d.agency}</span>
                     <span className={`chip ${d.national ? 'w-ok' : ''}`}>{d.airline}</span>
                     {d.urgent && <span className="chip w-bad">긴급모객</span>}
